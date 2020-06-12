@@ -1,0 +1,12 @@
+# ignore model files
+src/server/lib/pretrained_model/*
+src/setup/pretrained_model/*
+
+# ignore dataset
+src/setup/dataset/*
+
+# ignore vscode files
+.vscode/*
+
+# ignore python cache files
+__pycache__

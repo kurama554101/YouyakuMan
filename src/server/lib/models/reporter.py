@@ -4,7 +4,9 @@ from __future__ import print_function
 import time
 from datetime import datetime
 
-from src.models.stats import Statistics
+from lib.models.stats import Statistics
+
+from abc import ABCMeta, abstractmethod
 
 
 def build_report_manager(opt):
@@ -31,6 +33,7 @@ class ReportMgrBase(object):
     Inherited classes should override:
         * `_report_training`
     """
+    __metaclass__ = ABCMeta
 
     def __init__(self, report_every, start_time=-1.):
         """
@@ -72,6 +75,7 @@ class ReportMgrBase(object):
         else:
             return report_stats
 
+    @abstractmethod
     def _report_training(self, *args, **kwargs):
         """ To be overridden """
         raise NotImplementedError()

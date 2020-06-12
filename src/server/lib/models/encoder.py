@@ -3,8 +3,8 @@ import math
 import torch
 import torch.nn as nn
 
-from src.models.neural import MultiHeadedAttention, PositionwiseFeedForward
-from src.models.rnn import LayerNormLSTM
+from lib.models.neural import MultiHeadedAttention, PositionwiseFeedForward
+from lib.models.rnn import LayerNormLSTM
 
 
 class Classifier(nn.Module):
@@ -97,7 +97,7 @@ class TransformerInterEncoder(nn.Module):
             x = self.transformer_inter[i](i, x, x, ~mask)  # all_sents * max_tokens * dim
 
         x = self.layer_norm(x)
-        sent_scores = self.sigmoid(self.wo(x))
+        sent_scores = self.sigmoid(self.wo(x))  # マルチラベリング（複数文に対して、スコア1をつける場合）に対応するためにsigmoidになっている？
         sent_scores = sent_scores.squeeze(-1) * mask.float()
 
         return sent_scores

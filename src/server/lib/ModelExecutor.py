@@ -1,20 +1,38 @@
 import torch
 import sys
+from lib.models.model_builder import Summarizer
+from enum import Enum
 
 sys.stdout = open(sys.stdout.fileno(), mode='w', encoding='utf8', buffering=1)
 
 
-class Summarizer:
-    def __init__(self, test_data, model, n, translator=None):
-        self.data = test_data
+# TODO : use (currently, this enum is not used.)
+class ResultMode(Enum):
+    # result has only sentences
+    ONLY_SPECIFIC_SENTENCE = 0
+    # result has sentence and score
+    ALL_SENTENCE_WITH_SCORE = 1
+
+
+class ModelExecutor:
+    def __init__(self, model:Summarizer, translator=None):
         self.model = model
         self.translator = translator
-        n = self.n_distribution(n)
+    
+    def __call__(self, data, num_of_summaries:int):
+        self.data = data
+        
+        # predict datas
+        results = []
+        n = self.n_distribution(num_of_summaries)
         start_n = 0
         for i, data in enumerate(self.data):
             self._evaluate(data)
-            self._extract_n(n[i], start_n)
+            results.append(self._extract_n(n[i], start_n))
             start_n += n[i]
+        
+        return results
+        
 
     def n_distribution(self, n):
         if len(self.data) == 1:
@@ -56,10 +74,7 @@ class Summarizer:
         if self.translator:
             _pred = self.translator.output(_pred)
 
-        # Print result
-        for i, pred in enumerate(_pred):
-            sys.stdout.write("[要約文%s] %s \n" % (start_n+i+1, pred))
-            # print("[Summary %s] %s" % (start_n+i+1, pred))
+        return _pred
 
     def _evaluate(self, test_data):
         self.model.eval()
@@ -73,6 +88,7 @@ class Summarizer:
             sent_scores, mask = self.model(src, segs, clss, mask, mask_cls)
 
             sent_scores = sent_scores + mask.float()
+            
             selected_ids = torch.argsort(-sent_scores, 1)
             selected_ids = selected_ids.cpu().data.numpy()
         self.selected_ids = selected_ids[0]

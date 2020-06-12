@@ -3,15 +3,17 @@ import os
 import random
 import torch
 
-from src.models.preprocess import Preprocess
+from lib.models.preprocess import Preprocess
+#from preprocess import Preprocess
 
 
 def lazy_dataset(data_path, shuffle):
     data_path = data_path if data_path[-1] is '/' else data_path+'/'
 
     def _lazy_load(path):
-        with open(path, 'rb') as f:
-            return pickle.load(f)
+        # TODO : enable to set encoding parameter from outer
+        with open(path, 'rb', encoding='utf-8') as f:
+            return pickle.load(f, encoding="utf-8")
 
     pts = [data_path + x for x in os.listdir(data_path) if '.pickle' in x]
     if pts:
@@ -64,11 +66,11 @@ class Batch(object):
 
 
 class DataLoader:
-    def __init__(self, data_path, input_length, batch_size,
+    def __init__(self, data_path, input_length, batch_size, config,
                  device='cuda', shuffle=True):
         self.data_path = data_path if data_path[-1] is '/' else data_path+'/'
         self.shuffle = shuffle
-        self.preprocessor = Preprocess()
+        self.preprocessor = Preprocess(config)
         self.input_len = input_length
         self.batch_size = batch_size
         self.device = device
@@ -98,7 +100,7 @@ class DataLoader:
             try:
                 dataset = []
                 try:
-                    # Drop the current dataset for decreasing memory
+                # Drop the current dataset for decreasing memory
                     for i in range(self.batch_size):
                         rawdata = next(self.iterer)
                         data = self.preprocessor(rawdata, self.input_len)

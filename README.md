@@ -1,72 +1,113 @@
-# YouyakuMan
+# YouyakuMan on SageMaker
 
  [![Unstable](https://poser.pugx.org/ali-irawan/xtra/v/unstable.svg)](*https://poser.pugx.org/ali-irawan/xtra/v/unstable.svg*)  [![License](https://poser.pugx.org/ali-irawan/xtra/license.svg)](*https://poser.pugx.org/ali-irawan/xtra/license.svg*)
 
 ### Introduction
 
-This is an one-touch extractive summarization machine.
+This is an one-touch extractive summarization machine on SageMaker.
 
 using BertSum as summatization model, extract top N important sentences.
-
-![img](https://cdn-images-1.medium.com/max/800/1*NRamBWCtYuS8U6pqpnDiJQ.png)
 
 ---
 
 ### Prerequisites
 
-#### General requirement
+#### Setup Envrironment
+
+you need to install or setup the following environment.
+
+* [Docker](http://docs.docker.jp/index.html)
+* [AWS Account](https://aws.amazon.com/jp/register-flow/)
+* Python 3.6 or later
+
+#### Install python packages
+
+you need to install some python packages.
+please execute the following command.
 
 ```
-pip install torch
-pip install pytorch_pretrained_bert
-pip install googletrans
+$ cd <root folder of this repository>
+$ bash docker/setup/install.sh
 ```
 
-#### Japanese specific requirement
+#### Setup AWS Credentials
 
-- [BERT日本語Pretrainedモデル — KUROHASHI-KAWAHARA LAB](http://nlp.ist.i.kyoto-u.ac.jp/index.php?BERT日本語Pretrainedモデル)
-- [Juman++ V2の開発版](https://github.com/ku-nlp/jumanpp)[ — KUROHASHI-KAWAHARA LAB](http://nlp.ist.i.kyoto-u.ac.jp/index.php?BERT日本語Pretrainedモデル)
+you need to set the AWS credential parameters to use SageMaker and AWS S3.
+please set the following command.
+
+ex) Linux or MacOS
+```
+$ export AWS_ACCESS_KEY_ID=<AWS ACCESS Key ID>
+$ export AWS_SECRET_ACCESS_KEY=<AWS Secret ACCESS Key>
+```
+
+if other OS is used, please set the environment variable referring to [this page](https://docs.aws.amazon.com/ja_jp/cli/latest/userguide/cli-configure-envvars.html).
 
 ---
 
-### Pretrained Model
 
-English: [Here](https://drive.google.com/open?id=1wxf6zTTrhYGmUTVHVMxGpl_GLaZAC1ye)
+### Create docker images of training and inference
 
-Japanese: [Here](https://drive.google.com/open?id=10hJX1QBAHfJpErG2I8yhcAl2QB_q28Fi)
+To create the youyakuman model on SageMaker, you need to create docker images for training and inference.
+please execute the following command.
 
-Download and put under directory `checkpoint/en` or `checkpoint/jp`
+```
+$ cd <root folder of this repository>
+$ bash build_docker_images.sh <AWS ACCOUNT ID> <ECR Resion> <Device(cpu or gpu)>
+```
+
+### Train and Deploy the model on SageMaker
+
+To create youyakuman model(= BERTSum), please execute the following commands.
+
+```
+$ cd src/setup
+$ python3 setup.py --role <AWS role> --bucket_name <S3 bucket name> --region_name <AWS region> --endpoint_name <endpoint name>
+```
+
+AWS region information is descried in [this page](https://aws.amazon.com/jp/about-aws/global-infrastructure/regional-product-services/).
+
+
+#### setup parameters
+
+TBD
 
 ---
 
-### Example
+### Using inference service on Sagemaker
+
+#### start client service
+
+If you want to use the youyakuman inference service, you need to start the client service.
+please execute the following command to start it.
 
 ```
-$python youyakuman.py -txt_file YOUR_FILE -lang LANG -n 3 --super_long
+$ cd <root folder of this repository>
+$ docker-compose up client
 ```
 
-#### Note
+#### use client service
 
-Since Bert only takes 512 length as inputs, this summarizer crop articles >512 length.
+After client service is started, you access the following URL.
+http://localhost:8501/
 
-If --super_long option is used, summarizer automatically parse to numbers of 512 length inputs and summarize per inputs. Number of extraction might slightly altered with --super_long used.
+This client ui is the following image.
+![client_ui.png](document/client_ui.png)
 
----
+Please write the following parameter
+* endpoint name
+* region name
+* input mode (currently only input)
 
-### Train Example
+After input the above parameters, please enter the text and push start button to start the inference service.
 
-```
-$python youyakumanJPN_train.py -data_folder [training_txt_path] -save_path [model_saving_path] -train_from [pretrained_model_file]
-"""
--data_folder : path to train data folder, structure showed as below:
-                training_txt_path
-                ├─ article1.pickle
-                ├─ article2.pickle
-                ..    
-"""
-```
+### Other informations
 
-### Train Data Preparation
+#### Training dataset of youyakuman model
+
+[Livedoor news dataset](https://www.rondhuit.com/download.html) is used to train this youyakuman model.
+
+#### Train Data Preparation
 
 Training data should be a dictionary saved by `pickle`, to be specifically, a dictionary containing below contents of **one article**.
 
@@ -76,6 +117,8 @@ Training data should be a dictionary saved by `pickle`, to be specifically, a di
 
 ---
 ### Version Log:
+
+2020-06-12  Training and Inference script are executed on SageMaker
 
 2020-02-10  Training part added
 
