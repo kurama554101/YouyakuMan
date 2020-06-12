@@ -1,0 +1,74 @@
+# Base docker image is sagemaker pytorch image
+ARG BASE_IMAGE="preprod-pytorch:1.4.0-cpu-py3"
+FROM $BASE_IMAGE
+
+# set workdir (need to use root directory because changehostname.c is in root directory)
+WORKDIR /
+RUN mkdir tmp_build
+
+# update 
+#RUN add-apt-repository universe && \
+#    apt-get update
+RUN apt-get update
+
+# install boost to build juman
+RUN apt-get install -y libboost-dev
+
+# install jumann++ to use youyakuman
+RUN mkdir jumanpp && cd tmp_build && \
+    wget https://github.com/ku-nlp/jumanpp/releases/download/v2.0.0-rc3/jumanpp-2.0.0-rc3.tar.xz && \
+    tar xJf jumanpp-2.0.0-rc3.tar.xz
+
+RUN cd tmp_build && cd jumanpp-2.0.0-rc3 && mkdir build && cd build && \
+    cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/jumanpp && \
+    make install -j4
+
+# install googletrans
+RUN pip install googletrans
+
+# copy model folder of juman
+RUN cp -r tmp_build/jumanpp-2.0.0-rc3/model jumanpp/
+
+# install pyknp to use juman from python
+RUN pip install pyknp
+
+# install pretrained library for bert and google translation
+RUN pip install pytorch_pretrained_bert googletrans
+
+# install sumeval (and install other packages to use sumeval)
+RUN pip install spacy && python -m spacy download en && \ 
+    pip install janome && pip install git+https://github.com/tagucci/pythonrouge.git && \
+    pip install git+git://github.com/bdusell/rougescore.git
+
+## install mecab
+RUN apt-get -y install mecab libmecab-dev mecab-ipadic-utf8 mecab-jumandic-utf8 && \
+    pip install mecab-python3
+
+## install CRF++
+RUN cd tmp_build && \
+    wget "https://drive.google.com/uc?export=download&id=0B4y35FiV1wh7QVR6VXJ5dWExSTQ" -O CRF++-0.58.tar.gz && \
+    tar zxfv CRF++-0.58.tar.gz && cd CRF++-0.58 && \
+    ./configure && make && make install
+### for inference container
+RUN echo "/usr/local/lib" >> /etc/ld.so.conf.d/lib.conf && ldconfig
+
+## install CaboCha
+RUN cd tmp_build && \
+    FILE_ID=0B4y35FiV1wh7SDd1Q1dUQkZQaUU && FILE_NAME=cabocha-0.69.tar.bz2 && \
+    curl -sc cookie "https://drive.google.com/uc?export=download&id=0B4y35FiV1wh7SDd1Q1dUQkZQaUU" > /dev/null && \
+    CODE="$(awk '/_warning_/ {print $NF}' cookie)" && curl -Lb cookie "https://drive.google.com/uc?export=download&confirm=${CODE}&id=${FILE_ID}" -o ${FILE_NAME} && \
+    tar xvf cabocha-0.69.tar.bz2 && cd cabocha-0.69 && \
+    ./configure --with-mecab-config=`which mecab-config` --with-charset=UTF8 && \
+    make && make check && make install && ldconfig && cabocha --version
+RUN cd tmp_build/cabocha-0.69/python/ && \
+    python setup.py build_ext && python setup.py install
+
+## install sumeval
+RUN pip install sumeval
+
+# TODO : remove tmp_build folder
+
+
+# install utf8 jpn locale
+RUN apt-get -y install locales && echo "ja_JP UTF-8" > /etc/locale.gen && locale-gen
+ENV LANG="ja_JP.UTF-8" LANGUAGE="ja_JP:ja" LC_ALL="ja_JP.UTF-8" PYTHONIOENCODING="utf-8"

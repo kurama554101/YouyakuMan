@@ -2,17 +2,14 @@ import re
 
 from pyknp import Juman
 from sumeval.metrics.rouge import RougeCalculator
-from configparser import ConfigParser
 from pytorch_pretrained_bert import BertTokenizer
-
-config = ConfigParser()
-config.read('config.ini')
 
 
 class JumanTokenizer:
-    def __init__(self):
-        self.juman = Juman(command=config['Juman']['command'],
-                           option=config['Juman']['option'])
+    def __init__(self, config):
+        #self.juman = Juman(command=config['Juman']['command'],
+        #                   option=config['Juman']['option'])
+        self.juman = Juman(command=config['Juman']['command'])
 
     def __call__(self, text):
         result = self.juman.analysis(text)
@@ -29,8 +26,8 @@ class RougeNCalc:
 
 
 class Preprocess:
-    def __init__(self):
-        self.juman_tokenizer = JumanTokenizer()
+    def __init__(self, config):
+        self.juman_tokenizer = JumanTokenizer(config)
         self.rouge_calculator = RougeNCalc()
         self.bert_tokenizer = BertTokenizer(config['DEFAULT']['vocab_path'],
                                             do_lower_case=False, do_basic_tokenize=False)
@@ -57,7 +54,6 @@ class Preprocess:
         self._prep_segs()
         # step 6. trim length for input
         self._set_length(length)
-
         return {'src': self.tokenid,
                 'labels': self.label,
                 'segs': self.segs,
@@ -93,6 +89,8 @@ class Preprocess:
     # step 3.
     def _tokenize(self):
         def _preprocess_text(text):
+            #text = text.replace('\n', "") # for Juman
+            #text = text.replace("　", "")  # for Juman
             return text.replace(" ", "")  # for Juman
         for sentence in self.src_line:
             preprocessed_text = _preprocess_text(sentence)

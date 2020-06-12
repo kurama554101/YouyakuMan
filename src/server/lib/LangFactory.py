@@ -4,14 +4,12 @@ from configparser import ConfigParser
 from pytorch_pretrained_bert import BertTokenizer
 import pdb
 
-config = ConfigParser()
-config.read('./config.ini')
-
 
 class JumanTokenizer:
-    def __init__(self):
-        self.juman = Juman(command=config['Juman']['command'],
-                           option=config['Juman']['option'])
+    def __init__(self, config):
+        #self.juman = Juman(command=config['Juman']['command'],
+        #                   option=config['Juman']['option'])
+        self.juman = Juman(command=config['Juman']['command'])
 
     def __call__(self, text):
         result = self.juman.analysis(text)
@@ -19,33 +17,36 @@ class JumanTokenizer:
 
 
 class LangFactory:
-    def __init__(self, lang):
+    def __init__(self, lang, config):
         self.support_lang = ['en', 'jp']
         self.lang = lang
         self.stat = 'valid'
         if self.lang not in self.support_lang:
             print('Language not supported, will activate Translation.')
             self.stat = 'Invalid'
-        self._toolchooser()
+        self._toolchooser(config)
 
-    def _toolchooser(self):
+    def _toolchooser(self, config):
         if self.lang == 'jp':
-            self.toolkit = JapaneseWorker()
+            self.toolkit = JapaneseWorker(config)
         elif self.lang == 'en':
-            self.toolkit = EnglishWorker()
+            self.toolkit = EnglishWorker(config)
         else:
-            self.toolkit = EnglishWorker()
+            self.toolkit = EnglishWorker(config)
 
 
+# TODO : workerのabstract classをつくる
 class JapaneseWorker:
-    def __init__(self):
-        self.juman_tokenizer = JumanTokenizer()
+    def __init__(self, config):
+        self.juman_tokenizer = JumanTokenizer(config)
         self.bert_tokenizer = BertTokenizer(config['DEFAULT']['vocab_path'],
                                             do_basic_tokenize=False)
         self.cls_id = self.bert_tokenizer.vocab['[CLS]']
         self.mask_id = self.bert_tokenizer.vocab['[MASK]']
+        # TODO : これはこのままで大丈夫なのかを確認
         self.bert_model = 'PATH_TO_BERTJPN'
 
+        # TODO : 外からパスを設定できるようにする必要がある
         self.cp = 'checkpoint/jp/cp_step_710000.pt'
         self.opt = 'checkpoint/jp/opt_step_710000.pt'
 
@@ -99,12 +100,13 @@ class JapaneseWorker:
 
 
 class EnglishWorker:
-    def __init__(self):
+    def __init__(self, config):
         self.bert_tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
         self.cls_id = self.bert_tokenizer.vocab['[CLS]']
         self.mask_id = self.bert_tokenizer.vocab['[MASK]']
         self.bert_model = 'bert-base-uncased'
 
+        # TODO : 外からパスを設定できるようにする必要がある
         self.cp = 'checkpoint/en/stdict_step_300000.pt'
         self.opt = 'checkpoint/en/opt_step_300000.pt'
 

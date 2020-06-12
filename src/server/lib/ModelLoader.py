@@ -3,8 +3,8 @@ from torch import nn
 from pytorch_pretrained_bert import BertModel
 import pdb
 
-from src.models.encoder import TransformerInterEncoder
-from src.LangFactory import LangFactory
+from lib.models.encoder import TransformerInterEncoder
+from lib.LangFactory import LangFactory
 
 
 class Bert(nn.Module):
@@ -22,6 +22,7 @@ class Summarizer(nn.Module):
     def __init__(self, opt, lang):
         super(Summarizer, self).__init__()
         self.langfac = LangFactory(lang)
+        # TODO : model/Englishのパスを外から設定できるようにする
         self.bert = Bert(self.langfac.toolkit.bert_model, './model/English')
         self.encoder = TransformerInterEncoder(self.bert.model.config.hidden_size,
                                                opt['ff_size'],

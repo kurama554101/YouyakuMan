@@ -2,8 +2,8 @@ import os
 
 import torch
 
-from src.models.reporter import ReportMgr
-from src.models.stats import Statistics
+from lib.models.reporter import ReportMgr
+from lib.models.stats import Statistics
 
 
 def build_trainer(args, model, optim):
@@ -47,7 +47,7 @@ class Trainer(object):
         while step <= train_steps:
             reduce_counter = 0
             batch = next(train_iter)
-
+            
             true_batchs.append(batch)
             normalization += batch.batch_size
             accum += 1
@@ -73,7 +73,6 @@ class Trainer(object):
                 if step > train_steps:
                     break
             train_iter = train_iter_fct()
-
         return total_stats
 
     def _gradient_accumulation(self, true_batchs, normalization, total_stats,
