@@ -45,6 +45,17 @@ if other OS is used, please set the environment variable referring to [this page
 
 ---
 
+
+### Create docker images of training and inference
+
+To create the youyakuman model on SageMaker, you need to create docker images for training and inference.
+please execute the following command.
+
+```
+$ cd <root folder of this repository>
+$ bash build_docker_images.sh <AWS ACCOUNT ID> <ECR Resion> <Device(cpu or gpu)>
+```
+
 ### Train and Deploy the model on SageMaker
 
 To create youyakuman model(= BERTSum), please execute the following commands.
