@@ -68,7 +68,7 @@ $ python3 setup.py --role <AWS role> --bucket_name <S3 bucket name> --region_nam
 AWS region information is descried in [this page](https://aws.amazon.com/jp/about-aws/global-infrastructure/regional-product-services/).
 
 
-#### setup parameters
+#### Introduction of setup parameters
 
 TBD
 

@@ -2,7 +2,7 @@
 
 # set default parameter
 VERSION=1.0
-PUSH_ECR=false
+PUSH_ECR=true
 DOCKERFILE_PATH="docker/server/Dockerfile.server"
 
 # check parameter
