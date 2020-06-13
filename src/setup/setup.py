@@ -227,6 +227,7 @@ if __name__ == "__main__":
         debug=debug
     )
     
+    print("")
     print("process time is {}".format(self_timer.p_time_dict))
     
     # TODO : test to infer sample data
